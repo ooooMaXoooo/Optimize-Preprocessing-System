@@ -1,0 +1,1 @@
+gcc -Wall -c C:/Dev/Cpp/OPS/target/src/main.cpp -S
