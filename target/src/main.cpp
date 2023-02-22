@@ -1,3 +1,5 @@
+//#include <iostream>
+
 void Log(int nb, int nb2, int test) {
 	int nbc = nb;
 	int nbb = nb2;
@@ -137,4 +139,5 @@ void Logz(const char* nbi)
 int main()
 {
 	Log(789, 123, 456);
+	//std::cin.get();
 }

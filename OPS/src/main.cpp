@@ -1,24 +1,18 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <vector>
 #include <array>
+#include <unordered_map>
 
 int main()
 {
+	std::string file = "";
+
 	// execute the gcc command in the file ...
 	std::system("gcc -c C:/Dev/Cpp/OPS/target/src/main.cpp -S");
 
-	std::ofstream cleanFile("C:/Dev/Cpp/OPS/target/main.ops");
-	if (!cleanFile)
-	{
-		std::cout << "Le fichier de sortie n'a pas pu être vidé" << std::endl;
-		return 1;
-	}
-	cleanFile.clear();
-	cleanFile.close();
-
-	std::ofstream outFile("C:/Dev/Cpp/OPS/target/main.ops", std::ios::app);
+	//prepare file stream to write and read in
+	std::ofstream outFile("C:/Dev/Cpp/OPS/target/main.ops");
 	std::ifstream i_sourceFile("main.s");
 
 	if (!i_sourceFile)
@@ -35,17 +29,18 @@ int main()
 
 
 	std::string line;
-	std::vector<int> callPos;
-	std::vector<std::array<std::string, 2>> fx;
+
+	std::unordered_map<std::string, std::string> fx; // signature -- content
+	std::unordered_map<int, std::string> callPos; // callPos -- signature
+
 	std::string signature = "";
 	std::string content = "";
 
 	bool inContent = false;
 	int count = 0;
+	// detect lines to change and functions, many other thing will come in futur
 	while (std::getline(i_sourceFile, line))
 	{
-		count++;
-
 		if (line[0] == '\t')
 		{
 			if (inContent)
@@ -53,8 +48,9 @@ int main()
 				if (line == "\t.seh_endproc") // last iteration
 				{
 					inContent = false;
+					content.pop_back();
 					std::array<std::string,2> func = {signature, content};
-					fx.emplace_back(func);
+					fx[signature] = content;
 					signature = "";
 					content = "";
 				}
@@ -65,16 +61,15 @@ int main()
 			if (line[1] == 'c' && line[2] == 'a' && line[3] == 'l' && line[4] == 'l'
 				&& line != "\tcall\t__main") // call
 			{
-				callPos.emplace_back(count); // give the n° of the line
+				std::string callFx = "";
+				for (int i = 6; i < line.length(); i++)
+				{
+					callFx += line[i];
+				}
 
-				outFile << line << '\t' << count << '\n';
-			}
-			else
-			{
-				/*std::cout << count << "\t\t" << (line[1] == 'c')
-					<< "\n\t\t" << (line[2] == 'a')
-					<< "\n\t\t" << (line[3] == 'l')
-					<< "\n\t\t" << (line[4] == 'l') << "\n\n\n";*/
+				callPos[(int)i_sourceFile.tellg() - line.length() - 2 - count] = callFx;
+				// tellg go to 1-->x and know the \0 char so we need to remove 1 for each which is 2
+				// and the line doesn't take \n char so we remove 1 per line forgot  (count)
 			}
 		}
 
@@ -97,22 +92,28 @@ int main()
 				signature += line[i];
 			}
 			inContent = true;
-
-			outFile << line << '\t' << count << '\n';
 		}
 
 		if (line == "main:")
 		{
 			inContent = true;
 			signature = "main";
-
-			outFile << line << '\t' << count << '\n';
 		}
+		
+		file += line + '\n';
+		count++;
 	}
 
-	for (auto item : fx)
+	// change the call line by the content of the fx called
+	for (auto posFx : callPos)
 	{
-		std::cout << "signature : " << item[0] << std::endl;
-		std::cout << "content :\n" << item[1] << "\n\n\n";
+		//std::string test = "\n\n************\n" + fx.at(posFx.second) + "\n************\n\n";
+
+		file.replace(posFx.first, posFx.second.length()+6, fx.at(posFx.second));
+
+		//std::cout << "file[posFx.first] : " << posFx.first << " ***" << file[posFx.first] << "***\n";
 	}
+
+	//update the output file
+	outFile << file;
 }

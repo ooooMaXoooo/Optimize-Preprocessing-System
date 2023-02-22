@@ -46,7 +46,26 @@ main:
 	movl	$456, %r8d
 	movl	$123, %edx
 	movl	$789, %ecx
-	call	_Z3Logiii
+	pushq	%rbp
+	.seh_pushreg	%rbp
+	movq	%rsp, %rbp
+	subq	$16, %rsp
+	.seh_stackalloc	16
+	movl	%ecx, 16(%rbp)
+	movl	%edx, 24(%rbp)
+	movl	%r8d, 32(%rbp)
+	movl	16(%rbp), %eax
+	movl	%eax, -4(%rbp)
+	movl	24(%rbp), %eax
+	movl	%eax, -8(%rbp)
+	movl	32(%rbp), %eax
+	movl	%eax, -12(%rbp)
+	movl	-12(%rbp), %eax
+	addl	%eax, -8(%rbp)
+	nop
+	addq	$16, %rsp
+	popq	%rbp
+	ret
 	movq	.refptr._ZSt3cin(%rip), %rax
 	movq	%rax, %rcx
 	call	_ZNSi3getEv
