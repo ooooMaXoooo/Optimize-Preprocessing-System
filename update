@@ -1,3 +1,4 @@
 -remplace call fx by the content of the fx
 -watch if a function is defined but not used  --->  remove function
+-create a File class
 -at the very end of first version, optimize our code to go once and not more by example, we can do more things.
