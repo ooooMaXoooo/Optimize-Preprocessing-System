@@ -9,22 +9,34 @@ void Log(int nb, int nb2, int test) {
 
 }
 
-/*
-int recurs(int& a)
+int test(int a)
+{
+	if (a == 0)
+	{
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+
+/*int recurs(int& a)
 {
 	if ((a / 2) % 2 == 1)
 	{
 		a++;
 		return recurs(a);
 	}
+	else if (a == 1)
+	{
+		return a;
+	}
 	else
 	{
 		a /= 2;
-	}
-
-	if (a == 1)
-	{
-		return a;
+		return recurs(a);
 	}
 }*/
 
@@ -138,6 +150,7 @@ void Logz(const char* nbi)
 
 int main()
 {
-	Log(789, 123, 456);
+	//Log(789, 123, 456);
+	test(5);
 	//std::cin.get();
 }

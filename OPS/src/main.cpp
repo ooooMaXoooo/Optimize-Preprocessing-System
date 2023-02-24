@@ -3,15 +3,38 @@
 #include <string>
 #include <array>
 #include <unordered_map>
+#include "../lib/perso/module.h"
+
+
+std::unordered_map<std::string, std::string> fx; // signature -- content
+std::unordered_map<int, std::string> callPos; // callPos -- signature
+
+
+void createSignature(std::string& signature, std::string& content) {
+	content.pop_back(); // remove the \n
+	fx[signature] = content;
+	signature = "";
+	content = "";
+}
 
 int main()
 {
-	std::string file = "";
+	std::string fileText = "";
 
-	// execute the gcc command in the file ...
+	// execute the gcc command in the fileText ...
 	std::system("gcc -c C:/Dev/Cpp/OPS/target/src/main.cpp -S");
 
-	//prepare file stream to write and read in
+	//prepare the fileTexts we deal with
+	personal::File file("main.s");
+	file.outPath("C:/Dev/Cpp/OPS/target/main.ops");
+
+	if (!file)
+	{
+		std::cout << file.getError() << std::endl;
+		return 1;
+	}
+
+	/*prepare fileText stream to write and read in
 	std::ofstream outFile("C:/Dev/Cpp/OPS/target/main.ops");
 	std::ifstream i_sourceFile("main.s");
 
@@ -25,13 +48,10 @@ int main()
 	{
 		std::cout << "Le fichier de sortie n'a pas pu être ouvert" << std::endl;
 		return 1;
-	}
+	}*/
 
 
 	std::string line;
-
-	std::unordered_map<std::string, std::string> fx; // signature -- content
-	std::unordered_map<int, std::string> callPos; // callPos -- signature
 
 	std::string signature = "";
 	std::string content = "";
@@ -39,30 +59,28 @@ int main()
 	bool inContent = false;
 	int count = 0;
 	// detect lines to change and functions, many other thing will come in futur
-	while (std::getline(i_sourceFile, line))
+	while (std::getline(file, line))
 	{
 		if (line[0] == '\t')
 		{
 			if (inContent)
 			{
-				if (line == "\t.seh_endproc") // last iteration
+				if (line == "\tret") // last iteration
 				{
 					inContent = false;
-					content.pop_back();
-					std::array<std::string,2> func = {signature, content};
-					fx[signature] = content;
-					signature = "";
-					content = "";
+					createSignature(signature, content);
 				}
-
-				content += line + "\n";
+				else if (line != "\t.seh_setframe	%rbp, 0" && line != "\t.seh_endprologue")
+				{
+					content += line + "\n";
+				}
 			}
 
 			if (line[1] == 'c' && line[2] == 'a' && line[3] == 'l' && line[4] == 'l'
 				&& line != "\tcall\t__main") // call
 			{
 				std::string callFx = "";
-				for (int i = 6; i < line.length(); i++)
+				for (size_t i = 6; i < line.length(); i++)
 				{
 					callFx += line[i];
 				}
@@ -73,6 +91,15 @@ int main()
 			}
 		}
 
+		// if we are in a content and we have a jump for example we start a new signature and content
+		if (inContent && line[0] != '\t')
+		{
+			inContent = false;  // opti --> remove it bec we put it at true at the end
+
+			//createSignature(signature, content);
+
+			inContent = true;
+		}
 
 		/*
 		a function start with _Z
@@ -99,8 +126,10 @@ int main()
 			inContent = true;
 			signature = "main";
 		}
+
 		
-		file += line + '\n';
+		
+		fileText += line + '\n';
 		count++;
 	}
 
@@ -109,11 +138,11 @@ int main()
 	{
 		//std::string test = "\n\n************\n" + fx.at(posFx.second) + "\n************\n\n";
 
-		file.replace(posFx.first, posFx.second.length()+6, fx.at(posFx.second));
+		fileText.replace(posFx.first, posFx.second.length()+6, fx.at(posFx.second));
 
-		//std::cout << "file[posFx.first] : " << posFx.first << " ***" << file[posFx.first] << "***\n";
+		//std::cout << "fileText[posFx.first] : " << posFx.first << " ***" << fileText[posFx.first] << "***\n";
 	}
 
-	//update the output file
-	outFile << file;
+	//update the output fileText
+	file << fileText;
 }
