@@ -1,18 +1,22 @@
 #include <iostream>
 #include <fstream>
+
 #include <string>
 #include <array>
 #include <unordered_map>
-#include "../lib/perso/module.h"
 
 
+//fx contain the name and the content of an fx
 std::unordered_map<std::string, std::string> fx; // signature -- content
+
+//callPos contain for each pos where is a call, what is it called
 std::unordered_map<int, std::string> callPos; // callPos -- signature
 
 
 void createSignature(std::string& signature, std::string& content) {
 	content.pop_back(); // remove the \n
 	fx[signature] = content;
+	
 	signature = "";
 	content = "";
 }
@@ -20,36 +24,27 @@ void createSignature(std::string& signature, std::string& content) {
 int main()
 {
 	std::string fileText = "";
+	std::string outPath = "C:/Dev/Cpp/OPS/target/main.ops";
+	std::string readPath = "mains.s";
 
 	// execute the gcc command in the fileText ...
 	std::system("gcc -c C:/Dev/Cpp/OPS/target/src/main.cpp -S");
 
 	//prepare the fileTexts we deal with
-	personal::File file("main.s");
-	file.outPath("C:/Dev/Cpp/OPS/target/main.ops");
+	std::ofstream wfile(outPath, std::ios::cur);
+	std::ifstream rfile(readPath);
 
-	if (!file)
+	if (!wfile)
 	{
-		std::cout << file.getError() << std::endl;
+		std::cout << "error while loading writing file" << std::endl;
 		return 1;
 	}
-
-	/*prepare fileText stream to write and read in
-	std::ofstream outFile("C:/Dev/Cpp/OPS/target/main.ops");
-	std::ifstream i_sourceFile("main.s");
-
-	if (!i_sourceFile)
+	
+	if (!rfile)
 	{
-		std::cout << "Le fichier source n'a pas pu être ouvert" << std::endl;
+		std::cout << "error while loading reading file" << std::endl;
 		return 1;
 	}
-
-	if (!outFile)
-	{
-		std::cout << "Le fichier de sortie n'a pas pu être ouvert" << std::endl;
-		return 1;
-	}*/
-
 
 	std::string line;
 
@@ -59,7 +54,7 @@ int main()
 	bool inContent = false;
 	int count = 0;
 	// detect lines to change and functions, many other thing will come in futur
-	while (std::getline(file, line))
+	while (std::getline(rfile, line))
 	{
 		if (line[0] == '\t')
 		{
@@ -85,7 +80,7 @@ int main()
 					callFx += line[i];
 				}
 
-				callPos[(int)i_sourceFile.tellg() - line.length() - 2 - count] = callFx;
+				callPos[(int)rfile.tellg() - line.length() - 2 - count] = callFx;
 				// tellg go to 1-->x and know the \0 char so we need to remove 1 for each which is 2
 				// and the line doesn't take \n char so we remove 1 per line forgot  (count)
 			}
@@ -144,5 +139,5 @@ int main()
 	}
 
 	//update the output fileText
-	file << fileText;
+	wfile << fileText;
 }
